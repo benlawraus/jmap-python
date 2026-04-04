@@ -1,0 +1,122 @@
+JMAP Mail - Send Email (EmailSubmission)
+RFC 8621, Section 7
+=====================================================================
+
+An EmailSubmission represents the submission of an Email for delivery.
+An Email is sent by creating an EmailSubmission object.
+
+EmailSubmission Object Properties
+----------------------------------
+- id: Id (immutable; server-set)
+- identityId: Id (immutable) - Identity to associate with this submission
+- emailId: Id (immutable) - Email to send (does not have to be a draft)
+- threadId: Id (immutable; server-set) - set from the Email's threadId
+- envelope: Envelope|null (immutable)
+  If null/omitted, server generates from the Email:
+  - mailFrom: from Sender header (or From if no Sender), no params
+  - rcptTo: deduplicated To + Cc + Bcc addresses, no params
+
+  Envelope object:
+  - mailFrom: Address - { email: String, parameters: Object|null }
+  - rcptTo: Address[] - recipients with optional SMTP parameters
+
+- sendAt: UTCDate (immutable; server-set)
+  When the submission was/will be released for delivery.
+- undoStatus: String (server-set on create)
+  - "pending": May be possible to cancel
+  - "final": Message relayed, cannot recall
+  - "canceled": Submission was canceled
+  To cancel: update undoStatus to "canceled" (if still pending).
+- deliveryStatus: String[DeliveryStatus]|null (server-set)
+  Map of recipient email -> delivery status. May be null if not supported.
+
+  DeliveryStatus object:
+  - smtpReply: String - SMTP reply string
+  - delivered: String - "queued" | "yes" | "no" | "unknown"
+  - displayed: String - "unknown" | "yes"
+
+- dsnBlobIds: Id[] (server-set) - DSN blobs received, oldest first
+- mdnBlobIds: Id[] (server-set) - MDN blobs received, oldest first
+
+Methods
+-------
+
+EmailSubmission/get - Standard /get
+EmailSubmission/changes - Standard /changes
+EmailSubmission/query - Standard /query
+  FilterCondition:
+  - identityIds: Id[]
+  - emailIds: Id[]
+  - threadIds: Id[]
+  - undoStatus: String
+  - before: UTCDate
+  - after: UTCDate
+  Sort: "emailId", "threadId", "sentAt"
+
+EmailSubmission/queryChanges - Standard /queryChanges
+
+EmailSubmission/set
+  Standard /set with two extra request arguments:
+
+  - onSuccessUpdateEmail: Id[PatchObject]|null
+    Map of EmailSubmission id -> properties to update on the referenced Email
+    if the create/update/destroy succeeds.
+
+  - onSuccessDestroyEmail: Id[]|null
+    EmailSubmission ids whose referenced Emails should be destroyed on success.
+
+  After processing, an implicit Email/set call is made for these changes.
+  The server MUST remove Bcc header during delivery.
+
+SetError Types for Create
+--------------------------
+- invalidEmail: Email is invalid. May include "properties" String[].
+- tooManyRecipients: Includes "maxRecipients" UnsignedInt.
+- noRecipients: Envelope has no rcptTo addresses.
+- invalidRecipients: Invalid rcptTo addresses. Includes "invalidRecipients" String[].
+- forbiddenMailFrom: Not permitted to use envelope From address.
+- forbiddenFrom: Not permitted to use message From header address.
+- forbiddenToSend: No send permission. May include "description" String.
+- tooLarge: Message too big. Includes "maxSize" UnsignedInt.
+
+SetError Types for Update
+--------------------------
+- cannotUnsend: Cannot cancel the submission.
+
+Example - Send and move to sent folder:
+  [[ "EmailSubmission/set", {
+    "accountId": "ue411d190",
+    "create": {
+      "k1490": {
+        "identityId": "I64588216",
+        "emailId": "M7f6ed5bcfd7e2604d1753f6c",
+        "envelope": {
+          "mailFrom": { "email": "john@example.com", "parameters": null },
+          "rcptTo": [{ "email": "jane@example.com", "parameters": null }]
+        }
+      }
+    },
+    "onSuccessUpdateEmail": {
+      "#k1490": {
+        "mailboxIds/7cb4e8ee-df87-4757-b9c4-2ea1ca41b38e": null,
+        "mailboxIds/73dbcb4b-bffc-48bd-8c2a-a2e91ca672f6": true,
+        "keywords/$draft": null
+      }
+    }
+  }, "0" ]]
+
+Response (two results - EmailSubmission/set + implicit Email/set):
+  [[ "EmailSubmission/set", {
+    "accountId": "ue411d190",
+    "oldState": "012421s6-8nrq-4ps4-n0p4-9330r951ns21",
+    "newState": "355421f6-8aed-4cf4-a0c4-7377e951af36",
+    "created": {
+      "k1490": { "id": "ES-3bab7f9a-623e-4acf-99a5-2e67facb02a0" }
+    }
+  }, "0" ],
+  [ "Email/set", {
+    "accountId": "ue411d190",
+    "oldState": "778193",
+    "newState": "778197",
+    "updated": { "M7f6ed5bcfd7e2604d1753f6c": null }
+  }, "0" ]]

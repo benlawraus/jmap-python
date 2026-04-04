@@ -1,0 +1,12 @@
+Getting a new access token
+Your client should keep using the access token it has been issued until the token expires, which will result in getting a 401 HTTP response back.
+When the access token expires, the client must get a new one by making a POST request to the Fastmail token endpoint again. The following parameters MUST be present, using the “application/x-www-form-urlencoded” format with a character encoding of UTF-8 in the HTTP request entity-body:
+client_id: The client id for the application, given to the developer when your application is registered.
+grant_type: This MUST be “refresh_token”.
+refresh_token: The refresh token returned last time the client obtained a new access token.
+The success and failures responses are identical to those documented in the “obtaining a refresh token” section above.
+In the case of an “invalid_grant” error, there MAY be an additional property called “temporary”. If this is present and the value is true, the refresh token MAY become valid again at some point in the future. (This can happen if a user is locked by their admin, but then unlocked again at a later point.) The “error_description” property of the error object SHOULD be present with a user-readable explanation that the client may like to show. If the “temporary” property is not present, an invalid_grant error is permanent and the user will need to go through the OAuth flow again to get a new refresh token if they wish to reconnect to their Fastmail account.
+Please note, a new refresh token will be returned in the response and the client MUST replace their previous refresh token with this. The client MUST NOT try to use an old refresh token again; this will result in the authorization being revoked as a protection against leaked refresh tokens. If the user has multiple devices, each client MUST obtain separate authorization. You cannot share a refresh token between devices.
+Revoking a token
+If a client no longer needs the access it has been granted to an account, it can make an authenticated POST request to the following URL to immediately revoke all associated access tokens and refresh tokens:
+https://api.fastmail.com/oauth/revoke

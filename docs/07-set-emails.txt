@@ -1,0 +1,88 @@
+JMAP Mail - Create/Update/Delete Emails (Email/set)
+RFC 8621, Section 4.6
+=====================================================================
+
+Email/set encompasses:
+- Creating a draft
+- Changing keywords (e.g., unread/flagged status)
+- Adding/removing an Email to/from Mailboxes (moving)
+- Deleting Emails
+
+Standard /set method with these constraints for creation:
+
+Creation Constraints
+--------------------
+- "headers" property MUST NOT be given (set each header individually)
+- No duplicate header representations (e.g., can't have both "header:from" and "from")
+- Header fields MUST NOT be in forbidden parsed forms
+- Content-* headers MUST NOT be on Email object (only on EmailBodyPart)
+- If bodyStructure given, MUST NOT have textBody/htmlBody/attachments
+- textBody (if given) MUST be exactly one text/plain part
+- htmlBody (if given) MUST be exactly one text/html part
+- Within EmailBodyPart: partId OR blobId (not both)
+  - If partId: charset and size MUST be omitted
+  - Content-Transfer-Encoding MUST NOT be given
+- Server MUST generate Message-ID and Date if not included
+
+Updating Keywords/Mailboxes
+----------------------------
+Can either replace entire set or use JMAP patch syntax:
+  "keywords/$seen": null     (remove $seen)
+  "keywords/$flagged": true  (add $flagged)
+  "mailboxIds/INBOX_ID": null    (remove from mailbox)
+  "mailboxIds/TRASH_ID": true    (add to mailbox)
+
+Deleting Emails
+---------------
+Destroying removes from ALL Mailboxes.
+To trash: change mailboxIds to only the trash Mailbox.
+When emptying trash: don't destroy Emails also in other Mailboxes;
+just remove the trash Mailbox from those Emails.
+
+Response for created Emails includes: id, blobId, threadId, size.
+
+Extra SetError Types
+--------------------
+For create:
+- blobNotFound: A blob id for an EmailBodyPart doesn't exist.
+  Includes "notFound" Id[] property.
+
+For create and update:
+- tooManyKeywords: Would exceed server max keywords.
+- tooManyMailboxes: Would exceed server max Mailboxes per Email.
+
+Example - Mark as unread:
+  [[ "Email/set", {
+    "accountId": "ue150411c",
+    "update": {
+      "Ma783e5cdf5f2deffbc97930a": {
+        "keywords/$seen": null
+      }
+    }
+  }, "0" ]]
+
+Example - Create a draft:
+  [[ "Email/set", {
+    "accountId": "ue150411c",
+    "create": {
+      "k192": {
+        "mailboxIds": { "2ea1ca41b38e": true },
+        "keywords": { "$seen": true, "$draft": true },
+        "from": [{ "name": "Joe Bloggs", "email": "joe@example.com" }],
+        "subject": "World domination",
+        "receivedAt": "2018-07-10T01:03:11Z",
+        "sentAt": "2018-07-10T11:03:11+10:00",
+        "bodyStructure": {
+          "type": "text/plain",
+          "partId": "bd48",
+          "header:Content-Language": "en"
+        },
+        "bodyValues": {
+          "bd48": {
+            "value": "I have the most brilliant plan...",
+            "isTruncated": false
+          }
+        }
+      }
+    }
+  }, "0" ]]

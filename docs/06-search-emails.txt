@@ -1,0 +1,78 @@
+JMAP Mail - Search/Query Emails (Email/query)
+RFC 8621, Section 4.4-4.5
+=====================================================================
+
+Email/query
+-----------
+Standard /query method with additional argument:
+- collapseThreads: Boolean (default: false)
+  If true, only one Email per Thread is included (the first in sort order).
+
+FilterCondition Properties
+--------------------------
+- inMailbox: Id - Email must be in this Mailbox
+- inMailboxOtherThan: Id[] - Email must be in at least one Mailbox NOT in this list
+- before: UTCDate - receivedAt must be before this
+- after: UTCDate - receivedAt must be same or after this
+- minSize: UnsignedInt - size >= this value
+- maxSize: UnsignedInt - size < this value
+- allInThreadHaveKeyword: String - all Emails in Thread have keyword
+- someInThreadHaveKeyword: String - at least one Email in Thread has keyword
+- noneInThreadHaveKeyword: String - no Email in Thread has keyword
+- hasKeyword: String - this Email has keyword
+- notKeyword: String - this Email does not have keyword
+- hasAttachment: Boolean - matches hasAttachment property
+- text: String - searches From, To, Cc, Bcc, Subject, and body parts
+- from: String - searches From header
+- to: String - searches To header
+- cc: String - searches Cc header
+- bcc: String - searches Bcc header
+- subject: String - searches Subject header
+- body: String - searches body parts
+- header: String[] - [headerName] or [headerName, textToMatch]
+
+If zero properties specified, condition is always true.
+If multiple properties specified, ALL must match (implicit AND).
+
+Text matching semantics:
+- Encoded header sections should be decoded before matching
+- HTML tags/markup should be ignored when searching text/html
+- Case-insensitive matching
+- Quoted text = phrase search (exact sequence)
+- Outside quotes, whitespace divides separate tokens (all must be present)
+- Tokens may use stemming (e.g., "bus" matches "buses" but not "business")
+
+Sorting
+-------
+MUST support: "receivedAt"
+SHOULD support: "size", "from", "to", "subject", "sentAt",
+  "hasKeyword", "allInThreadHaveKeyword", "someInThreadHaveKeyword"
+
+For keyword sorts, Comparator object must also have a "keyword" property.
+
+Example sort:
+  [{ "property": "someInThreadHaveKeyword", "keyword": "$flagged", "isAscending": false },
+   { "property": "subject", "collation": "i;ascii-casemap" },
+   { "property": "receivedAt", "isAscending": false }]
+
+Thread Collapsing
+-----------------
+When collapseThreads is true, after filtering and sorting, any Emails whose
+Thread id has already appeared are removed. Each Thread appears once, at
+the position of its first Email in the sorted list.
+
+Email/queryChanges
+------------------
+Standard /queryChanges with additional argument:
+- collapseThreads: Boolean (default: false) - must match original query
+
+Example - Query inbox, newest first, collapsed threads:
+  [[ "Email/query", {
+    "accountId": "ue150411c",
+    "filter": { "inMailbox": "fb666a55" },
+    "sort": [{ "isAscending": false, "property": "receivedAt" }],
+    "collapseThreads": true,
+    "position": 0,
+    "limit": 30,
+    "calculateTotal": true
+  }, "0" ]]

@@ -1,0 +1,49 @@
+JMAP Mail - Vacation Response
+RFC 8621, Section 8
+=====================================================================
+
+A vacation response sends an automatic reply when a message is delivered,
+informing the sender their message may not be read for some time.
+Implementations MUST follow RFC 3834 to avoid undesirable automated behaviour.
+
+There is only ever ONE VacationResponse object per account, with id "singleton".
+
+VacationResponse Object Properties
+-----------------------------------
+- id: Id (immutable; server-set) - always "singleton"
+- isEnabled: Boolean
+  Whether to send vacation responses for messages arriving in the date range.
+- fromDate: UTCDate|null
+  Start date-time for vacation response. Null = effective immediately.
+- toDate: UTCDate|null
+  End date-time. Null = effective indefinitely.
+- subject: String|null
+  Subject for the auto-reply. Null = server chooses appropriate subject.
+- textBody: String|null
+  Plaintext body. If null, server may generate from htmlBody or use default.
+- htmlBody: String|null
+  HTML body. If null, server may generate from textBody or send plaintext only.
+
+Methods
+-------
+
+VacationResponse/get
+  Standard /get method.
+
+VacationResponse/set
+  Standard /set method.
+
+Example - Enable vacation response:
+  [[ "VacationResponse/set", {
+    "accountId": "ue150411c",
+    "update": {
+      "singleton": {
+        "isEnabled": true,
+        "fromDate": "2024-12-20T00:00:00Z",
+        "toDate": "2025-01-06T00:00:00Z",
+        "subject": "Out of Office",
+        "textBody": "I am currently out of the office and will return on January 6. For urgent matters, please contact support@example.com.",
+        "htmlBody": null
+      }
+    }
+  }, "0" ]]

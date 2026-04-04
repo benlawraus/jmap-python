@@ -1,0 +1,96 @@
+JMAP Mail - Mailboxes
+RFC 8621, Section 2
+=====================================================================
+
+A Mailbox represents a named set of Email objects (like a folder or label).
+An Email MUST belong to one or more Mailboxes. Email id does not change
+when moved between Mailboxes.
+
+Mailbox Object Properties
+-------------------------
+- id: Id (immutable; server-set)
+- name: String
+  User-visible name (e.g., "Inbox"). Net-Unicode, >= 1 char.
+  No two siblings may share the same parent and name.
+- parentId: Id|null (default: null)
+  Parent Mailbox id, or null for top-level. Must not create loops.
+- role: String|null (default: null)
+  Special purpose identifier (e.g., "inbox", "trash", "sent", "drafts").
+  Lowercase, from IANA "IMAP Mailbox Name Attributes" registry.
+  A Mailbox can have only one role; no two Mailboxes share a role.
+- sortOrder: UnsignedInt (default: 0)
+  Display ordering. Lower = displayed first among siblings.
+- totalEmails: UnsignedInt (server-set)
+- unreadEmails: UnsignedInt (server-set)
+  Emails without $seen or $draft keywords.
+- totalThreads: UnsignedInt (server-set)
+- unreadThreads: UnsignedInt (server-set)
+  Threads with at least one unread Email.
+  Special handling for trash: emails only in trash are ignored for other
+  mailbox counts, and emails not in trash are ignored for trash counts.
+- myRights: MailboxRights (server-set)
+  - mayReadItems: Boolean
+  - mayAddItems: Boolean
+  - mayRemoveItems: Boolean
+  - maySetSeen: Boolean
+  - maySetKeywords: Boolean
+  - mayCreateChild: Boolean
+  - mayRename: Boolean
+  - mayDelete: Boolean
+  - maySubmit: Boolean
+- isSubscribed: Boolean
+  Whether user wants to see this Mailbox. Defaults false for shared, true
+  for user-created.
+
+Methods
+-------
+
+Mailbox/get
+  Standard /get method. "ids" may be null to fetch all.
+
+Mailbox/changes
+  Standard /changes method with extra response:
+  - updatedProperties: String[]|null
+    If only count properties changed, lists which ones. Helps optimize
+    data transfer via back-references.
+
+Mailbox/query
+  Standard /query with extra arguments:
+  - sortAsTree: Boolean (default: false)
+    Sort results respecting parent-child hierarchy.
+  - filterAsTree: Boolean (default: false)
+    Only include a Mailbox if all ancestors also match the filter.
+
+  FilterCondition properties:
+  - parentId: Id|null
+  - name: String (contains match)
+  - role: String|null (exact match)
+  - hasAnyRole: Boolean
+  - isSubscribed: Boolean
+
+  Supported sort properties: "sortOrder", "name"
+
+Mailbox/queryChanges
+  Standard /queryChanges method.
+
+Mailbox/set
+  Standard /set with extra argument:
+  - onDestroyRemoveEmails: Boolean (default: false)
+    If true, Emails in the destroyed Mailbox are removed from it (and
+    destroyed if in no other Mailboxes). If false, destroy is rejected
+    with "mailboxHasEmail" error.
+
+  Extra SetError types for destroy:
+  - mailboxHasChild: Still has child Mailboxes.
+  - mailboxHasEmail: Has Emails and onDestroyRemoveEmails was false.
+
+Example - Fetch all Mailboxes:
+  [[ "Mailbox/get", { "accountId": "u33084183", "ids": null }, "0" ]]
+
+Example - Fetch changes and updated Mailboxes:
+  [[ "Mailbox/changes", { "accountId": "u33084183", "sinceState": "78540" }, "0" ],
+   [ "Mailbox/get", {
+     "accountId": "u33084183",
+     "#ids": { "resultOf": "0", "name": "Mailbox/changes", "path": "/updated" },
+     "#properties": { "resultOf": "0", "name": "Mailbox/changes", "path": "/updatedProperties" }
+   }, "2" ]]

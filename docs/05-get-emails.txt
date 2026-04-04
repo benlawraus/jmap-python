@@ -1,0 +1,78 @@
+JMAP Mail - Get Emails (Email/get)
+RFC 8621, Section 4.2-4.3
+=====================================================================
+
+Email/get
+---------
+Standard /get method with additional request arguments:
+
+- bodyProperties: String[]
+  Properties to fetch for each EmailBodyPart. Default:
+  ["partId", "blobId", "size", "name", "type", "charset",
+   "disposition", "cid", "language", "location"]
+
+- fetchTextBodyValues: Boolean (default: false)
+  Include text/* parts from textBody in bodyValues.
+
+- fetchHTMLBodyValues: Boolean (default: false)
+  Include text/* parts from htmlBody in bodyValues.
+
+- fetchAllBodyValues: Boolean (default: false)
+  Include text/* parts from bodyStructure in bodyValues.
+
+- maxBodyValueBytes: UnsignedInt (default: 0)
+  Truncate body value to this size (0 = no truncation).
+  Must result in valid UTF-8, not mid-codepoint.
+  Should not truncate inside HTML tags.
+
+Default properties (if "properties" omitted):
+  ["id", "blobId", "threadId", "mailboxIds", "keywords", "size",
+   "receivedAt", "messageId", "inReplyTo", "references", "sender",
+   "from", "to", "cc", "bcc", "replyTo", "subject", "sentAt",
+   "hasAttachment", "preview", "bodyValues", "textBody", "htmlBody",
+   "attachments"]
+
+Fast properties (expected low latency):
+  id, blobId, threadId, mailboxIds, keywords, size, receivedAt,
+  messageId, inReplyTo, sender, from, to, cc, bcc, replyTo,
+  subject, sentAt, hasAttachment, preview
+
+Example request:
+  [[ "Email/get", {
+    "ids": ["f123u456", "f123u457"],
+    "properties": ["threadId", "mailboxIds", "from", "subject",
+      "receivedAt", "header:List-POST:asURLs", "htmlBody", "bodyValues"],
+    "bodyProperties": ["partId", "blobId", "size", "type"],
+    "fetchHTMLBodyValues": true,
+    "maxBodyValueBytes": 256
+  }, "#1" ]]
+
+Example response:
+  [[ "Email/get", {
+    "accountId": "abc",
+    "state": "41234123231",
+    "list": [{
+      "id": "f123u457",
+      "threadId": "ef1314a",
+      "mailboxIds": { "f123": true },
+      "from": [{ "name": "Joe Bloggs", "email": "joe@example.com" }],
+      "subject": "Dinner on Thursday?",
+      "receivedAt": "2013-10-13T14:12:00Z",
+      "header:List-POST:asURLs": ["mailto:partytime@lists.example.com"],
+      "htmlBody": [
+        { "partId": "1", "blobId": "B841623871", "size": 283331, "type": "text/html" },
+        { "partId": "2", "blobId": "B319437193", "size": 10343, "type": "text/plain" }
+      ],
+      "bodyValues": {
+        "1": { "isEncodingProblem": false, "isTruncated": true,
+               "value": "<html><body><p>Hello ..." },
+        "2": { "isEncodingProblem": false, "isTruncated": false,
+               "value": "-- Sent by your friendly mailing list ..." }
+      }
+    }],
+    "notFound": ["f123u456"]
+  }, "#1" ]]
+
+Email/changes
+-------------
+Standard /changes method. Newer changes should be returned first.

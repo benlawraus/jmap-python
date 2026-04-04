@@ -1,0 +1,86 @@
+JMAP Mail - Email Object Properties
+RFC 8621, Section 4.1
+=====================================================================
+
+An Email object represents an RFC 5322 message, letting clients avoid
+MIME parsing, transfer encoding, and character encoding complexities.
+
+Metadata Properties (not derived from message parsing)
+------------------------------------------------------
+- id: Id (immutable; server-set) - JMAP object id, NOT Message-ID header
+- blobId: Id (immutable; server-set) - raw message octets
+- threadId: Id (immutable; server-set) - Thread this Email belongs to
+- mailboxIds: Id[Boolean] - set of Mailbox ids (keys=ids, values=true)
+- keywords: String[Boolean] (default: {})
+  System keywords (with $ prefix in JMAP, \ prefix in IMAP):
+  - $draft: Email is a draft
+  - $seen: Email has been read
+  - $flagged: Flagged for urgent/special attention
+  - $answered: Email has been replied to
+  Other common keywords:
+  - $forwarded: Email has been forwarded
+  - $phishing: Likely phishing
+  - $junk: Definitely spam
+  - $notjunk: Definitely not spam
+  Keywords are case-insensitive, 1-255 chars ASCII (excluding control, space,
+  and (){}]%*"\). Servers return lowercase.
+- size: UnsignedInt (immutable; server-set) - raw message size in octets
+- receivedAt: UTCDate (immutable; default: creation time)
+
+Header Fields (convenience properties)
+---------------------------------------
+- messageId: String[]|null (immutable) - header:Message-ID:asMessageIds
+- inReplyTo: String[]|null (immutable) - header:In-Reply-To:asMessageIds
+- references: String[]|null (immutable) - header:References:asMessageIds
+- sender: EmailAddress[]|null (immutable) - header:Sender:asAddresses
+- from: EmailAddress[]|null (immutable) - header:From:asAddresses
+- to: EmailAddress[]|null (immutable) - header:To:asAddresses
+- cc: EmailAddress[]|null (immutable) - header:Cc:asAddresses
+- bcc: EmailAddress[]|null (immutable) - header:Bcc:asAddresses
+- replyTo: EmailAddress[]|null (immutable) - header:Reply-To:asAddresses
+- subject: String|null (immutable) - header:Subject:asText
+- sentAt: Date|null (immutable) - header:Date:asDate
+
+EmailAddress object: { name: String|null, email: String }
+
+Header Field Parsed Forms
+--------------------------
+- Raw: String - raw octets after field name colon
+- Text: String - unfolded, decoded, NFC normalized
+- Addresses: EmailAddress[] - parsed address-list
+- GroupedAddresses: EmailAddressGroup[] - preserves group info
+  EmailAddressGroup: { name: String|null, addresses: EmailAddress[] }
+- MessageIds: String[]|null - parsed msg-id list
+- Date: Date|null - parsed date-time
+- URLs: String[]|null - parsed URL list (for List-* headers)
+
+Custom header access: header:{name}[:as{Form}][:all]
+- Without :all, returns last instance (or null)
+- With :all, returns array of all instances
+
+Body Part Properties
+--------------------
+EmailBodyPart object:
+- partId: String|null (null for multipart/*)
+- blobId: Id|null (null for multipart/*)
+- size: UnsignedInt - decoded content size
+- headers: EmailHeader[]
+- name: String|null - decoded filename
+- type: String - Content-Type (without params)
+- charset: String|null
+- disposition: String|null - Content-Disposition (without params)
+- cid: String|null - Content-Id (without angle brackets)
+- language: String[]|null
+- location: String|null
+- subParts: EmailBodyPart[]|null (for multipart/* only)
+
+Email Body Properties
+---------------------
+- bodyStructure: EmailBodyPart (immutable) - full MIME tree
+- bodyValues: String[EmailBodyValue] (immutable) - partId -> body value
+  EmailBodyValue: { value: String, isEncodingProblem: Boolean, isTruncated: Boolean }
+- textBody: EmailBodyPart[] (immutable) - parts for plaintext display
+- htmlBody: EmailBodyPart[] (immutable) - parts for HTML display
+- attachments: EmailBodyPart[] (immutable) - attachment parts
+- hasAttachment: Boolean (immutable; server-set)
+- preview: String (immutable; server-set) - plaintext fragment, max 256 chars

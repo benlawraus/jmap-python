@@ -1,0 +1,50 @@
+JMAP Mail - Import Emails (Email/import)
+RFC 8621, Section 4.8
+=====================================================================
+
+Email/import adds RFC 5322 messages to the Email set in an account.
+Messages must first be uploaded as blobs using the standard upload mechanism.
+
+Request Arguments
+-----------------
+- accountId: Id
+- ifInState: String|null
+  Must match current state or method aborts with "stateMismatch" error.
+- emails: Id[EmailImport]
+  Map of creation id to EmailImport objects.
+
+EmailImport Object
+------------------
+- blobId: Id - blob containing the raw RFC 5322 message
+- mailboxIds: Id[Boolean] - Mailboxes to assign (at least one required)
+- keywords: String[Boolean] (default: {})
+- receivedAt: UTCDate (default: most recent Received header date, or import time)
+
+Each import is atomic (may succeed or fail individually).
+
+Duplicate Handling
+------------------
+Server MAY forbid duplicate messages. If so, rejects with "alreadyExists"
+SetError including "existingId" property with the id of the existing Email.
+If duplicates allowed, the new Email gets a separate id with independent
+mutable properties.
+
+Response
+--------
+- accountId: Id
+- oldState: String|null
+- newState: String
+- created: Id[Email]|null - creation id -> { id, blobId, threadId, size }
+- notCreated: Id[SetError]|null
+
+SetError Types
+--------------
+- invalidProperties: Invalid blobId, mailboxIds, or keywords
+- alreadyExists: Duplicate message (includes existingId)
+- overQuota: Would exceed account quota
+- invalidEmail: Blob is not a valid RFC 5322 message
+  (server MAY fix errors and return different blobId instead)
+
+Additional Errors
+-----------------
+- stateMismatch: ifInState didn't match current state

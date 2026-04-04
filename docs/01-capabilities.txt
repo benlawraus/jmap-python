@@ -1,0 +1,56 @@
+JMAP Mail - Capabilities and Session
+RFC 8621 - The JSON Meta Application Protocol (JMAP) for Mail
+=====================================================================
+
+Overview
+--------
+JMAP is a generic protocol for synchronising data (mail, calendars, contacts)
+between a client and a server. This spec defines a data model for accessing
+a mail store over JMAP: query, read, organise, and submit mail for sending.
+
+A message must belong to one or more Mailboxes. Its id does not change when
+moved between Mailboxes. Messages may be assigned zero or more keywords
+(short arbitrary strings for metadata like unread status).
+
+Replies are linked by a common Thread id. Permissions happen per-mailbox.
+
+Capability URIs
+---------------
+
+1. urn:ietf:params:jmap:mail
+   Supports: Mailbox, Thread, Email, SearchSnippet data types.
+
+   Account capabilities object properties:
+   - maxMailboxesPerEmail: UnsignedInt|null
+     Max Mailboxes assignable to a single Email. Must be >= 1 or null (no limit).
+   - maxMailboxDepth: UnsignedInt|null
+     Max depth of Mailbox hierarchy, or null for no limit.
+   - maxSizeMailboxName: UnsignedInt
+     Max length (UTF-8 octets) for Mailbox name. Must be >= 100.
+   - maxSizeAttachmentsPerEmail: UnsignedInt
+     Max total size of attachments (unencoded, in octets) for a single Email.
+   - emailQuerySortOptions: String[]
+     Supported sort properties for Email/query.
+   - mayCreateTopLevelMailbox: Boolean
+     Whether user may create a Mailbox with null parentId.
+
+2. urn:ietf:params:jmap:submission
+   Supports: Identity and EmailSubmission data types.
+
+   Account capabilities:
+   - maxDelayedSend: UnsignedInt
+     Max delay in seconds for delayed send. 0 = not supported.
+   - submissionExtensions: String[String[]]
+     SMTP submission extensions supported (ehlo-name -> ehlo-args).
+
+3. urn:ietf:params:jmap:vacationresponse
+   Supports: VacationResponse data type.
+
+Push
+----
+Servers MUST support JMAP push mechanisms (RFC 8620, Section 7).
+
+Additionally, servers MUST support pushing state changes for "EmailDelivery" type.
+The EmailDelivery state changes only when a new Email is added to the store
+(not for read/delete changes). This lets battery-constrained clients register
+for new mail notifications without getting notified of every change.

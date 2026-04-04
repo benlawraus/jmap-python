@@ -1,0 +1,46 @@
+JMAP Mail - Threads
+RFC 8621, Section 3
+=====================================================================
+
+Replies are grouped with the original message to form a Thread. A Thread is
+a flat list of Emails ordered by date. Every Email MUST belong to a Thread,
+even if it's the only one.
+
+Threading Algorithm (suggested for new implementations):
+Two messages belong in the same Thread if BOTH:
+1. An identical message id appears in both messages in any of Message-Id,
+   In-Reply-To, or References header fields.
+2. After stripping prefixes (Fwd:, Re:, [List-Tag], etc.) and ignoring
+   whitespace, the subjects are the same.
+
+If the server merges Threads (e.g., a third Email bridges two), it MUST
+delete and reinsert Emails that change threadId (since threadId is immutable).
+
+Thread Object Properties
+------------------------
+- id: Id (immutable; server-set)
+- emailIds: Id[] (server-set)
+  Ids of Emails in the Thread, sorted by receivedAt oldest first.
+
+Methods
+-------
+
+Thread/get
+  Standard /get method.
+
+  Example request:
+    [[ "Thread/get", { "accountId": "acme", "ids": ["f123u4", "f41u44"] }, "#1" ]]
+
+  Example response:
+    [[ "Thread/get", {
+      "accountId": "acme",
+      "state": "f6a7e214",
+      "list": [
+        { "id": "f123u4", "emailIds": ["eaa623", "f782cbb"] },
+        { "id": "f41u44", "emailIds": ["82cf7bb"] }
+      ],
+      "notFound": []
+    }, "#1" ]]
+
+Thread/changes
+  Standard /changes method.

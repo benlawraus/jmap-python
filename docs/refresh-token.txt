@@ -1,0 +1,18 @@
+Obtaining a refresh token
+Following authorization, the client will obtain initial refresh tokens and access tokens by making a POST request to the Fastmail token endpoint:
+https://api.fastmail.com/oauth/refresh
+The following parameters MUST be present, using the “application/x-www-form-urlencoded” format with a character encoding of UTF-8 in the HTTP request entity-body:
+client_id: The client id for the application, given to the developer when your application is registered.
+redirect_uri: The redirect_uri parameter sent with the authorization request from which the code was obtained.
+grant_type: This MUST be “authorization_code”.
+code: The code returned via the redirect back from authorization.
+code_verifier: The code_verifier generated for the authorization, as per RFC 7636.
+Other parameters MAY be supplied but will be ignored.
+The server will verify the parameters and if successful, return a 200 OK response with a content type of application/json. The body will be a JSON object with the following properties:
+access_token: String A bearer token used to authenticate API requests. This will be valid for a fixed, limited time.
+token_type: String The type of the access token. For now, this will always be “bearer”.
+expires_in: Number The lifetime in seconds of the access token. For example, the value 3600 denotes that the access token will expire in one hour from the time the response was generated.
+scope: String The space delimited set of scopes that this access token may use.
+refresh_token: String The refresh token to use next time the client needs to get a new access token.
+If the request fails, the server will return an appropriate HTTP error response, probably 400 Bad Request, with a content type of application/json. The body will be a JSON object with the following property:
+error: String A single ASCII error code indicating why the request failed, with a value as per RFC 6749, Section 5.2.

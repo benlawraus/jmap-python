@@ -1,0 +1,16 @@
+OAuth at Fastmail
+Fastmail can authorize third-party clients to access a user’s data using OAuth 2.0, in conformance with the Authorization Code grant flow of the OAuth 2.0 Authorization Framework, as defined in RFC 6749.
+Scopes
+The following scopes are currently supported:
+urn:ietf:params:jmap:core
+This grants access to use the JMAP protocol and fetch the user’s session object. You MUST request this scope if requesting any other JMAP-based scope.
+urn:ietf:params:jmap:mail
+This represents support for the Mailbox, Thread, Email, and SearchSnippet data types and associated API methods. This is the scope you need to read and manage mail for a user. Full documentation is in RFC8621.
+urn:ietf:params:jmap:submission
+This represents support for the Identity and EmailSubmission data types and associated API methods. You will need this scope if you want to send mail for a user via JMAP. Full documentation is in RFC8621.
+urn:ietf:params:jmap:vacationresponse
+This represents support for the VacationResponse data type and associated API methods. With this scope, you can change the user’s vacation response and turn it on or off.
+urn:ietf:params:jmap:contacts
+This represents support for the AddressBook and ContactCard data types and associated API methods. You will need this scope if you want to read and manage a user’s contacts. Full documentation is in RFC9610.
+https://www.fastmail.com/dev/maskedemail
+This grants the ability to read and write the MaskedEmail data type, as documented above.

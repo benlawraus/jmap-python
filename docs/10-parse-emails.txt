@@ -1,0 +1,37 @@
+JMAP Mail - Parse Emails (Email/parse)
+RFC 8621, Section 4.9
+=====================================================================
+
+Email/parse allows parsing blobs as RFC 5322 messages to get Email objects
+without importing them into the mail store. Useful for displaying attached
+messages.
+
+The following metadata properties will be null: id, mailboxIds, keywords,
+receivedAt. threadId MAY be present if the server can calculate it.
+
+Request Arguments
+-----------------
+- accountId: Id
+- blobIds: Id[] - blobs to parse
+- properties: String[] (default: ["messageId", "inReplyTo", "references",
+  "sender", "from", "to", "cc", "bcc", "replyTo", "subject", "sentAt",
+  "hasAttachment", "preview", "bodyValues", "textBody", "htmlBody",
+  "attachments"])
+- bodyProperties: String[] - properties for each EmailBodyPart
+  (defaults same as Email/get)
+- fetchTextBodyValues: Boolean (default: false)
+- fetchHTMLBodyValues: Boolean (default: false)
+- fetchAllBodyValues: Boolean (default: false)
+- maxBodyValueBytes: UnsignedInt (default: 0)
+
+Response
+--------
+- accountId: Id
+- parsed: Id[Email]|null - blob id -> parsed Email representation
+- notParsable: Id[]|null - blobs that couldn't be parsed as Emails
+- notFound: Id[]|null - blob ids that weren't found
+
+Errors
+------
+- invalidArguments: If a forbidden header form is requested
+  (e.g., "header:From:asDate")

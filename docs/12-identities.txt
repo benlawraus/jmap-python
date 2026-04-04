@@ -1,0 +1,70 @@
+JMAP Mail - Identities
+RFC 8621, Section 6
+=====================================================================
+
+An Identity stores information about an email address or domain the user
+may send from. Multiple Identities with the same email address are allowed
+(for different settings like name/signature).
+
+Identity Object Properties
+---------------------------
+- id: Id (immutable; server-set)
+- name: String (default: "")
+  The "From" name to use when creating a new Email.
+- email: String (immutable)
+  The "From" email address to use. If mailbox part is "*" (e.g., "*@example.com"),
+  client may use any valid address at that domain.
+- replyTo: EmailAddress[]|null (default: null)
+- bcc: EmailAddress[]|null (default: null)
+  Auto-Bcc for new Emails from this Identity.
+- textSignature: String (default: "")
+  Signature for plaintext messages.
+- htmlSignature: String (default: "")
+  HTML snippet signature for HTML messages (inserted in <body>).
+- mayDelete: Boolean (server-set)
+  Whether user can delete this Identity. Attempting to destroy one with
+  mayDelete: false returns "forbidden" SetError.
+
+Methods
+-------
+
+Identity/get
+  Standard /get. "ids" may be null to fetch all.
+
+Identity/changes
+  Standard /changes.
+
+Identity/set
+  Standard /set.
+  Extra SetError for create:
+  - forbiddenFrom: User not allowed to send from the given email address.
+
+Example request:
+  [ "Identity/get", { "accountId": "acme" }, "0" ]
+
+Example response:
+  [ "Identity/get", {
+    "accountId": "acme",
+    "state": "99401312ae-11-333",
+    "list": [
+      {
+        "id": "XD-3301-222-11_22AAz",
+        "name": "Joe Bloggs",
+        "email": "joe@example.com",
+        "replyTo": null,
+        "bcc": [{ "name": null, "email": "joe+archive@example.com" }],
+        "textSignature": "-- \nJoe Bloggs\nMaster of Email",
+        "htmlSignature": "<div><b>Joe Bloggs</b></div><div>Master of Email</div>",
+        "mayDelete": false
+      },
+      {
+        "id": "XD-9911312-11_22AAz",
+        "name": "Joe B",
+        "email": "*@example.com",
+        "replyTo": null, "bcc": null,
+        "textSignature": "", "htmlSignature": "",
+        "mayDelete": true
+      }
+    ],
+    "notFound": []
+  }, "0" ]

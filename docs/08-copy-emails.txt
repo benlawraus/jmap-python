@@ -1,0 +1,53 @@
+JMAP Mail - Copy Emails Between Accounts (Email/copy)
+RFC 8621, Section 4.7
+=====================================================================
+
+Email/copy
+----------
+Standard /copy method. Only these properties may be set during copy:
+- mailboxIds
+- keywords
+- receivedAt
+
+Cannot modify the message content itself.
+
+The server MAY forbid duplicate messages (same content or Message-ID)
+within an account. If the target account already has the Email, the copy
+is rejected with "alreadyExists" error.
+
+Response for successfully copied Emails includes: id, blobId, threadId, size.
+
+Example - Copy a draft to another account:
+  [[ "Email/copy", {
+    "fromAccountId": "ue150411c",
+    "accountId": "u6c6c41ac",
+    "create": {
+      "k45": {
+        "id": "Md45b47b4877521042cec0938",
+        "mailboxIds": { "75a4c956": true }
+      }
+    },
+    "onSuccessDestroyOriginal": true
+  }, "0" ]]
+
+Response (two results due to implicit Email/set for destroy):
+  [[ "Email/copy", {
+    "fromAccountId": "ue150411c",
+    "accountId": "u6c6c41ac",
+    "oldState": "7ee7e9263a6d",
+    "newState": "5a0d2447ed26",
+    "created": {
+      "k45": {
+        "id": "M138f9954a5cd2423daeafa55",
+        "blobId": "G6b9fb047cba722c48c611e79233d057c6b0b74e8",
+        "threadId": "T2f242ea424a4079a",
+        "size": 11721
+      }
+    }
+  }, "0" ],
+  [ "Email/set", {
+    "accountId": "ue150411c",
+    "oldState": "780842",
+    "newState": "780871",
+    "destroyed": ["Md45b47b4877521042cec0938"]
+  }, "0" ]]

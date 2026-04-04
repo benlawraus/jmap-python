@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /Users/ben/webpages/Work/jmap-python/.venv/lib/python*/site-packages/)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(pip install:*)",
+      "Bash(python3:*)",
+      "Bash(ollama list:*)",
+      "Bash(find /Users/ben/webpages/Work/jmap-python/JMAP-Samples -type f \\\\\\( -name \"*.py\" -o -name \"*.js\" -o -name \"*.pl\" -o -name \"*.lua\" \\\\\\) -exec wc -l {} +)",
+      "Bash(python main.py --tools)",
+      "Bash(pip show:*)",
+      "Bash(git rm:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

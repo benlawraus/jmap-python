@@ -1,0 +1,41 @@
+Registration
+Clients are currently registered manually by contact with Fastmail developers. Want to connect your app with OAuth? Check out our partnerships page and get in touch!
+We’ll need the following information to register your client, but we can update this later, so don’t worry if you’re starting something new and don’t have everything to hand yet — we’d still love to hear from you.
+clientName: The name of your app, to be shown to the user during authorization.
+logoUrl: The URL for a logo to display for your app. This will be rendered in a square shape.
+clientUrl: The URL of a web page providing information about your app (e.g. the page on the App store, your website, or a GitHub link).
+tosUrl: The URL for your terms of service.
+policyUrl: The URL for your privacy policy.
+supportUrl: The URL of a web page that tells users how to contact you for support with your app.
+scopes: The list of scopes your app may request access for. This should be the minimal set of scopes needed for your app to function. For example, if you are building a password manager that just manages the user’s Masked Email addresses, you should not request the urn:ietf:params:jmap:mail scope, which would give access to the messages the user receives, as the app has no need for this.
+redirectUris: A list of redirect URIs the client may use in the OAuth flow. You can register as many as you like. Each redirect URI:
+MUST be a full URI including path if desired.
+MAY include query parameters.
+MUST NOT include a fragment part (#).
+MUST NOT include path traversal ([\/]..).
+MUST start with one of:
+An https domain you own, e.g. https://example.com/ (This is referred to as a “claimed https URI” in OAuth docs.)
+A private-use URI scheme in reverse domain notation, e.g. com.example:/. Such a scheme MUST have at least one dot in it. It SHOULD be formed from a domain you own.
+http://localhost/ – the loopback URL. During authorization, an arbitrary port may be given by the client, and localhost may be replaced by either 127.0.0.1 or ::1.
+clientOrigins: A list of origins the client may use to make CORS requests to the token endpoint and JMAP API. If your app is a web app and connecting directly to our API (rather than via your servers), you’ll need to ensure you register the origins you will be using for it to work. If you are not building a web-based app, you don’t need this.
+We will assign a client id for the registration and send it back to you.
+If the client supports OAuth with multiple authorization servers (e.g. it adds support for another email service) it MUST NOT reuse the same redirect URI with different registrations. (For example, it should add a per-service path component.) This allows it to detect and prevent server mix-up attacks (see the state parameter below).
+Authorization
+Clients initiate authorization by opening the user’s web browser at the Fastmail OAuth Authorization URL:
+https://api.fastmail.com/oauth/authorize
+The following URL parameters MUST be present:
+client_id: The client id for the application, given to the developer when your application is registered.
+redirect_uri: One of the redirect URIs previously registered with Fastmail. This MUST be identical to the registered URI. The one exception to this is if a URI with the prefix http://localhost/ was registered, in which case the matching URI MUST also include an arbitrary port and MAY use 127.0.0.1 or ::1 instead of localhost.
+For example, if http://localhost/redirect was registered, then the client could send http://127.0.0.1:49152/redirect as the redirect_uri for authorization.
+response_type: This MUST be “code”. No other value is accepted at this time.
+scope: A space delimited set of scopes the client would like access to. This MUST be a subset of the scopes registered for the client.
+code_challenge: A PKCE code challenge as per RFC 7636, using SHA-256. To generate a challenge, first generate a “code_verifier”: a high-entropy cryptographic random string using the characters [A-Z] / [a-z] / [0-9] / "-" / "." / "*" / "~" (the unreserved characters from Section 2.3 of RFC 3986), with a minimum length of 43 characters and a maximum length of 128 characters. The code_challenge is then BASE64URL-ENCODE(SHA256(ASCII(code_verifier))).
+code_challenge_method: The only accepted value at this time is “S256”.
+state: An opaque value used by the client to verify that an authorization response is due to a request that the client initiated. The Fastmail server will include this value when redirecting the user-agent back to the client. Clients MUST generate a state with a unique, unguessable random string when initiating an authorization request. When a response is received, the client MUST: - Verify that the state returned matches exactly the state it sent, to verify that this request was indeed initiated by the client and not an attacker. - Verify that the redirect URI the authorization response came in on was the one they used when generating the request. This prevents Mix-Up Attacks when the client supports more than one authorization server.
+Other URL parameters MAY be supplied but will be ignored.
+Fastmail will authenticate the user and ask them if they wish to grant authorization to the client. If successful, the client will receive a response via the redirect_uri, which will include the following query parameters:
+code: The authorization code. This may be exchanged for the refresh token. It expires 10 minutes after authorization. It MUST NOT be used again once the client has successfully exchanged it for a refresh token. This will result in all authentication tokens associated with it being immediately revoked.
+state: The value of the state parameter that was passed in with the initial request.
+If the authorization fails due to a missing or invalid client_id or redirect_uri parameter, the user agent will not redirect back to the client. Otherwise, the client will receive a response via the redirect_uri, which will include the following query parameters:
+error: An error type, as per RFC 6749, section 4.1.2.1.
+state: The value of the state parameter that was passed in with the initial request.

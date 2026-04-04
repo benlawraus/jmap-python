@@ -1,0 +1,60 @@
+JMAP Mail - Search Snippets (SearchSnippet/get)
+RFC 8621, Section 5
+=====================================================================
+
+When searching Emails, clients may want to show the matching section of
+the body as a preview and highlight matching terms in subject and body.
+
+SearchSnippet Object
+--------------------
+- emailId: Id - the Email this snippet applies to
+- subject: String|null
+  If filter text matches the subject: the subject with HTML entity encoding
+  for &, <, > and matching words wrapped in <mark></mark> tags.
+  Null if subject doesn't match.
+- preview: String|null
+  If filter text matches body: relevant section (converted to plaintext
+  if HTML) with same transformations. Max 255 octets.
+  Null if body doesn't match.
+
+Note: SearchSnippet does NOT have an "id" property.
+
+SearchSnippet/get
+-----------------
+Request arguments:
+- accountId: Id
+- filter: FilterOperator|FilterCondition|null
+  Same filter as used with Email/query.
+- emailIds: Id[] - Emails to fetch snippets for
+
+Response:
+- accountId: Id
+- list: SearchSnippet[] - may not be in same order as requested ids
+- notFound: Id[]|null
+
+Snippets may differ on subsequent fetches (algorithm may change).
+No state string or update mechanism needed.
+
+Errors
+------
+- requestTooLarge: Too many emailIds requested
+- unsupportedFilter: Server can't process the given filter
+
+Example request:
+  [[ "SearchSnippet/get", {
+    "accountId": "ue150411c",
+    "filter": { "text": "foo" },
+    "emailIds": ["M44200ec123de277c0c1ce69c", "M7bcbcb0b58d7729686e83d99"]
+  }, "0" ]]
+
+Example response:
+  [[ "SearchSnippet/get", {
+    "accountId": "ue150411c",
+    "list": [
+      { "emailId": "M44200ec123de277c0c1ce69c", "subject": null, "preview": null },
+      { "emailId": "M7bcbcb0b58d7729686e83d99",
+        "subject": "The <mark>Foo</mark>sball competition",
+        "preview": "...year the <mark>foo</mark>sball competition will be held..." }
+    ],
+    "notFound": null
+  }, "0" ]]

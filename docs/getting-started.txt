@@ -1,0 +1,5 @@
+Getting started with JMAP
+JMAP is a modern protocol that provides standard methods for efficiently synchronising data with a server. It lets us provide a consistent interface to all the different data types in a Fastmail account, such as emails, calendar events, or contacts.
+Like most modern APIs, JMAP uses HTTP and JSON so it’s easy to implement in just about any language. We’ve written a short JMAP crash course, and published open source sample code to our GitHub account to help you get started.
+To start using a JMAP API you need two things: the URL of the JMAP Session resource and authentication credentials. The JMAP session resource can be found at https://api.fastmail.com/jmap/session. To authenticate, you’ll need an API token, as discussed above.
+To use an API token, add an Authorization header set to Bearer {value}, where {value} is the value of the token to your API request. Our JMAP APIs are CORS enabled so you can create integrations directly from a web app, as well as from a server or native code.
