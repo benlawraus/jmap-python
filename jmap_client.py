@@ -151,6 +151,7 @@ class JMAPMailClient:
         before: datetime | None = None,
         after: datetime | None = None,
         limit: int = 20,
+        sort_order: str = "desc",
     ) -> dict:
         filter_args: dict[str, Any] = {}
         if query:
@@ -185,7 +186,7 @@ class JMAPMailClient:
         results = self.client.request([
             EmailQuery(
                 filter=filt,
-                sort=[Comparator(property="receivedAt", is_ascending=False)],
+                sort=[Comparator(property="receivedAt", is_ascending=(sort_order == "asc"))],
                 limit=limit,
                 collapse_threads=True,
             ),

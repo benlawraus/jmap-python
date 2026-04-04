@@ -147,6 +147,7 @@ def list_mailboxes() -> dict:
             "before": {"type": "string", "description": "Emails received before this UTC datetime (ISO 8601, e.g. '2024-01-15T00:00:00Z')"},
             "after": {"type": "string", "description": "Emails received on or after this UTC datetime (ISO 8601)"},
             "limit": {"type": "integer", "description": "Maximum number of results to return (default: 20, max: 100)", "default": 20},
+            "sort_order": {"type": "string", "enum": ["asc", "desc"], "description": "Sort by received date: 'asc' (oldest first) or 'desc' (newest first, default)", "default": "desc"},
         },
         "required": [],
     },
@@ -166,6 +167,7 @@ def search_emails(
     before: str | None = None,
     after: str | None = None,
     limit: int = 20,
+    sort_order: str = "desc",
 ) -> dict:
     client = _require_client()
     before_dt = datetime.fromisoformat(before) if before else None
@@ -177,7 +179,7 @@ def search_emails(
         cc_addr=cc_addr, bcc_addr=bcc_addr, subject=subject, body=body,
         in_mailbox=in_mailbox, has_keyword=has_keyword, not_keyword=not_keyword,
         has_attachment=has_attachment, before=before_dt, after=after_dt,
-        limit=limit,
+        limit=limit, sort_order=sort_order,
     )
     return {"success": True, **result}
 
