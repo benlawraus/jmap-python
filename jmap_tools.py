@@ -221,9 +221,11 @@ def get_email(email_id: str, format: str = "text") -> dict:
 )
 def download_attachment(
     email_id: str, blob_id: str, file_name: str | None = None,
+    output_dir: str | None = None,
 ) -> dict:
     client = _require_client()
-    result = client.download_attachment(email_id, blob_id, file_name=file_name)
+    result = client.download_attachment(email_id, blob_id, file_name=file_name,
+                                        output_dir=output_dir)
     return {"success": True, **result}
 
 

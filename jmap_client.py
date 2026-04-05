@@ -314,6 +314,7 @@ class JMAPMailClient:
 
     def download_attachment(
         self, email_id: str, blob_id: str, file_name: str | None = None,
+        output_dir: str | None = None,
     ) -> dict:
         result = self.client.request(
             EmailGet(
@@ -343,8 +344,8 @@ class JMAPMailClient:
             ext = mimetypes.guess_extension(attachment.type) or ""
             base_name = base_name + ext
 
-        attachments_dir = Path("attachments")
-        attachments_dir.mkdir(exist_ok=True)
+        attachments_dir = Path(output_dir) if output_dir else Path("attachments")
+        attachments_dir.mkdir(parents=True, exist_ok=True)
         dest = attachments_dir / base_name
 
         self.client.download_attachment(attachment, dest)
