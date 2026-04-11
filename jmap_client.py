@@ -280,6 +280,37 @@ class JMAPMailClient:
             "preview": e.preview,
         }
 
+    def get_emails_metadata(
+        self, ids: list[str], properties: list[str] | None = None,
+    ) -> list[dict]:
+        """Fetch a chosen subset of properties for many emails in one JMAP request.
+
+        Returns a list of plain dicts. Order is whatever JMAP returns; callers
+        should match by 'id'. Ids that no longer exist server-side are simply
+        absent from the result.
+
+        Default properties: id, threadId, keywords, preview — the minimum needed
+        for a backfill that only wants flags + thread linkage.
+        """
+        if not ids:
+            return []
+        if properties is None:
+            properties = ["id", "threadId", "keywords", "preview"]
+        result = self.client.request(
+            EmailGet(ids=list(ids), properties=properties)
+        )
+        if not isinstance(result, EmailGetResponse):
+            raise JMAPError(f"EmailGet failed: {result}")
+        out: list[dict] = []
+        for e in result.data:
+            out.append({
+                "id": e.id,
+                "thread_id": e.thread_id,
+                "keywords": list(e.keywords.keys()) if e.keywords else [],
+                "preview": e.preview,
+            })
+        return out
+
     def get_thread(self, thread_id: str) -> dict:
         results = self.client.request([
             ThreadGet(ids=[thread_id]),

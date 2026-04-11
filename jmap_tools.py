@@ -204,6 +204,34 @@ def get_email(email_id: str, format: str = "text") -> dict:
     return {"success": True, **result}
 
 
+# ── Tool: get_emails_metadata ─────────────────────────────────────────
+
+@jmap_tool(
+    name="get_emails_metadata",
+    description="Fetch a chosen subset of properties for many emails in one batched JMAP request. Defaults to id, threadId, keywords, preview — useful for backfill jobs that only need flags or thread linkage.",
+    parameters={
+        "type": "object",
+        "properties": {
+            "ids": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "List of JMAP email ids to fetch.",
+            },
+            "properties": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "JMAP property names to fetch (e.g. ['id','threadId','keywords','preview']). Omit for the default set.",
+            },
+        },
+        "required": ["ids"],
+    },
+)
+def get_emails_metadata(ids: list[str], properties: list[str] | None = None) -> dict:
+    client = _require_client()
+    emails = client.get_emails_metadata(ids, properties)
+    return {"success": True, "emails": emails}
+
+
 # ── Tool: download_attachment ─────────────────────────────────────────
 
 @jmap_tool(
