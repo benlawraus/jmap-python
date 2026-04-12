@@ -235,7 +235,7 @@ class JMAPMailClient:
 
         filt = EmailQueryFilterCondition(**filter_args) if filter_args else None
 
-        results = self.client.request(
+        query_resp = self.client.request(
             EmailQuery(
                 filter=filt,
                 sort=[Comparator(property="receivedAt", is_ascending=(sort_order == "asc"))],
@@ -245,7 +245,6 @@ class JMAPMailClient:
             ),
         )
 
-        query_resp = results.response
         if not isinstance(query_resp, EmailQueryResponse):
             raise JMAPError(f"Email query failed: {query_resp}")
 
