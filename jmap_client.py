@@ -151,6 +151,7 @@ class JMAPMailClient:
         before: datetime | None = None,
         after: datetime | None = None,
         limit: int = 20,
+        position: int = 0,
         sort_order: str = "desc",
     ) -> dict:
         filter_args: dict[str, Any] = {}
@@ -188,6 +189,7 @@ class JMAPMailClient:
                 filter=filt,
                 sort=[Comparator(property="receivedAt", is_ascending=(sort_order == "asc"))],
                 limit=limit,
+                position=position,
                 collapse_threads=True,
             ),
             EmailGet(
@@ -214,6 +216,43 @@ class JMAPMailClient:
         return {
             "total": query_resp.total,
             "emails": emails,
+        }
+
+    def query_ids(
+        self,
+        in_mailbox: str | None = None,
+        after: datetime | None = None,
+        limit: int = 50,
+        position: int = 0,
+        sort_order: str = "asc",
+    ) -> dict:
+        """Email/query only — returns IDs with no Email/get. Lightest possible call."""
+        filter_args: dict[str, Any] = {}
+        if in_mailbox:
+            filter_args["in_mailbox"] = in_mailbox
+        if after:
+            filter_args["after"] = after
+
+        filt = EmailQueryFilterCondition(**filter_args) if filter_args else None
+
+        results = self.client.request(
+            EmailQuery(
+                filter=filt,
+                sort=[Comparator(property="receivedAt", is_ascending=(sort_order == "asc"))],
+                limit=limit,
+                position=position,
+                collapse_threads=True,
+            ),
+        )
+
+        query_resp = results.response
+        if not isinstance(query_resp, EmailQueryResponse):
+            raise JMAPError(f"Email query failed: {query_resp}")
+
+        return {
+            "ids": query_resp.ids or [],
+            "total": query_resp.total,
+            "position": query_resp.position,
         }
 
     def get_email(self, email_id: str, format: str = "text") -> dict:

@@ -167,6 +167,7 @@ def search_emails(
     before: str | None = None,
     after: str | None = None,
     limit: int = 20,
+    position: int = 0,
     sort_order: str = "desc",
 ) -> dict:
     client = _require_client()
@@ -179,7 +180,27 @@ def search_emails(
         cc_addr=cc_addr, bcc_addr=bcc_addr, subject=subject, body=body,
         in_mailbox=in_mailbox, has_keyword=has_keyword, not_keyword=not_keyword,
         has_attachment=has_attachment, before=before_dt, after=after_dt,
-        limit=limit, sort_order=sort_order,
+        limit=limit, position=position, sort_order=sort_order,
+    )
+    return {"success": True, **result}
+
+
+# ── Internal helper (not an LLM tool) ─────────────────────────────────
+
+def query_email_ids(
+    in_mailbox: str | None = None,
+    after: str | None = None,
+    limit: int = 50,
+    position: int = 0,
+    sort_order: str = "asc",
+) -> dict:
+    """Email/query only — returns IDs, no Email/get. Lightest possible JMAP call."""
+    client = _require_client()
+    after_dt = datetime.fromisoformat(after) if after else None
+    limit = min(limit, 100)
+    result = client.query_ids(
+        in_mailbox=in_mailbox, after=after_dt,
+        limit=limit, position=position, sort_order=sort_order,
     )
     return {"success": True, **result}
 
