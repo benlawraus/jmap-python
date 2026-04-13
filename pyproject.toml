@@ -8,3 +8,6 @@ dependencies = [
     "python-dotenv>=1.0.0,<2.0.0",
     "ollama>=0.6.0,<1.0.0",
 ]
+
+[tool.setuptools]
+py-modules = ["jmap_tools", "jmap_client"]
