@@ -1,0 +1,10 @@
+[project]
+name = "jmap-python"
+version = "0.1.0"
+description = "JMAP email tools library exposing email operations as LLM-callable functions"
+requires-python = ">=3.10"
+dependencies = [
+    "jmapc>=0.2.23,<1.0.0",
+    "python-dotenv>=1.0.0,<2.0.0",
+    "ollama>=0.6.0,<1.0.0",
+]

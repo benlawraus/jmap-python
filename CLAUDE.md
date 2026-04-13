@@ -9,7 +9,7 @@ JMAP email tools library that exposes email operations as LLM-callable functions
 ## Commands
 
 ```bash
-pip install -r requirements.txt          # Install dependencies
+pip install .                             # Install dependencies
 python main.py --tools                   # Print all tool definitions as JSON
 python main.py --demo                    # Run interactive demo (requires .env)
 python main.py --call <tool> '<json>'    # Call a specific tool from CLI
